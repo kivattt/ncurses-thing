@@ -4,8 +4,6 @@
 #include <string>
 #include <ncurses.h>
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-
 using std::string;
 
 namespace nc {
@@ -27,13 +25,13 @@ namespace nc {
 
 	int get_width() {
 		int width, height;
-		getmaxyx(stdscr, width, height);
+		getmaxyx(stdscr, height, width);
 		return width;
 	}
 
 	int get_height() {
 		int width, height;
-		getmaxyx(stdscr, width, height);
+		getmaxyx(stdscr, height, width);
 		return height;
 	}
 
@@ -43,15 +41,25 @@ namespace nc {
 
 	// Returns amount of characters printed
 	int print(string text, int x, int y, int width) {
+		if (x > width)
+			return 0;
+
 		int i = 0;
-		for (i = x; i < text.length(); i++) {
-			if (i > width)
+		for (; i < text.length(); i++) {
+			if (x+i > width)
 				break;
 
-			set_cell(i, y, text[i]);
+			set_cell(x+i, y, text[i]);
 		}
 
-		return MAX(0, i-x);
+		return i+1;
+	}
+
+	// Fills horizontal line at x,y with 'width' number of spaces
+	void fill_line(int x, int y, int width) {
+		for (int i = x; i < width; i++) {
+			set_cell(i, y, ' ');
+		}
 	}
 
 	void fini() {
