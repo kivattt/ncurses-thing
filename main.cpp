@@ -16,9 +16,12 @@ int main() {
 		nc::show();
 		char ch = getch();
 
-		if (ch == 'q') {
-			running = false;
-			break;
+		switch (ch) {
+			case 'q':
+				running = false;
+				break;
+			case 'h':
+				fen.go_left();
 		}
 	}
 
