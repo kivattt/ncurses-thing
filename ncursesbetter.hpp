@@ -41,18 +41,18 @@ namespace nc {
 
 	// Returns amount of characters printed
 	int print(string text, int x, int y, int width) {
-		if (x > width)
+		if (x >= width)
 			return 0;
 
 		int i = 0;
 		for (; i < text.length(); i++) {
-			if (x+i > width)
+			if (x+i >= width)
 				break;
 
 			set_cell(x+i, y, text[i]);
 		}
 
-		return i+1;
+		return i;
 	}
 
 	// Fills horizontal line at x,y with 'width' number of spaces
