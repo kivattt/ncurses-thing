@@ -24,6 +24,9 @@ int main() {
 
 		int ch = getch();
 		switch (ch) {
+			case KEY_RESIZE:
+				redraw = true;
+				break;
 			case 'q':
 				running = false;
 				break;

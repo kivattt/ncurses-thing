@@ -150,6 +150,7 @@ struct Fen {
 		if (sel.parent_path() != "/") {
 			leftPane.folder = sel.parent_path().parent_path();
 			leftPane.read_folder();
+			leftPane.set_selected_entry_from_string(sel.parent_path().filename());
 		} else {
 			leftPane.entries.clear();
 		}
@@ -227,7 +228,7 @@ struct Fen {
 	void draw(int x, int y, int width, int height) {
 		topBar.draw(x, y, width, height);
 
-		int leftWidth = double(width) / 4;
+		int leftWidth = double(width) / 6;
 		int midAndRightWidth = leftWidth + double(width - leftWidth) / 2;
 
 		leftPane.draw(x, y+1, leftWidth-1, height-1);
