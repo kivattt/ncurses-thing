@@ -11,6 +11,7 @@ namespace nc {
 		initscr();
 		noecho();
 		curs_set(0);
+		keypad(stdscr, true);
 		start_color();
 		use_default_colors();
 	}

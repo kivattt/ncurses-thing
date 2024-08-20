@@ -22,22 +22,29 @@ int main() {
 		}
 		redraw = true;
 
-		char ch = getch();
+		int ch = getch();
 		switch (ch) {
 			case 'q':
 				running = false;
 				break;
 			case 'h':
+			case KEY_LEFT:
 				redraw = fen.go_left();
 				break;
 			case 'l':
+			case KEY_RIGHT:
 				redraw = fen.go_right();
 				break;
 			case 'k':
+			case KEY_UP:
 				redraw = fen.go_up();
 				break;
 			case 'j':
+			case KEY_DOWN:
 				redraw = fen.go_down();
+				break;
+			default:
+				redraw = false;
 				break;
 		}
 	}
