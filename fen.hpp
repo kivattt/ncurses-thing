@@ -20,14 +20,14 @@ using std::vector;
 namespace fs = std::filesystem;
 
 struct TopBar {
-	string username;
+	string username, hostname;
 	fs::path *sel;
 
 	void draw(int x, int y, int width, int height) {
 		attron(A_BOLD);
 
 		attron(COLOR_PAIR(MYCOLOR_USERNAME_PAIR));
-		int usernameLength = nc::print(username, x, y, width) + 1;
+		int usernameLength = nc::print(username + "@" + hostname, x, y, width) + 1;
 		attroff(COLOR_PAIR(MYCOLOR_USERNAME_PAIR));
 
 		attron(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
@@ -179,6 +179,7 @@ struct Fen {
 
 		uid_t EUID = geteuid();
 		topBar.username = util::get_username(EUID);
+		topBar.hostname = util::get_hostname();
 		init_pair(MYCOLOR_USERNAME_PAIR, util::get_username_color(EUID), -1);
 
 		sel = fs::current_path();

@@ -2,6 +2,7 @@
 #define UTIL_HPP
 
 #include <unistd.h>
+#include <limits.h>
 #include <pwd.h>
 #include <sys/types.h>
 
@@ -25,6 +26,12 @@ namespace util {
 		if (pw)
 			return pw->pw_name;
 		return "unknown";
+	}
+
+	string get_hostname() {
+		char hostname[HOST_NAME_MAX + 1];
+		gethostname(hostname, HOST_NAME_MAX + 1);
+		return hostname;
 	}
 
 	string path_with_end_slash(string path) {
