@@ -63,6 +63,7 @@ struct BottomBar {
 };
 
 struct FilesPane {
+	bool isLeftFilesPane = false;
 	vector <fs::directory_entry> entries;
 	int selectedEntryIndex = 0;
 	string folder;
@@ -116,7 +117,7 @@ struct FilesPane {
 	}
 
 	void draw(int x, int y, int width, int height) {
-		if (entries.empty() && folder != "/") {
+		if (entries.empty() && folder != "/" && !isLeftFilesPane) {
 			attron(COLOR_PAIR(MYCOLOR_RED_BG_PAIR));
 			nc::print("empty", x, y, width);
 			attroff(COLOR_PAIR(MYCOLOR_RED_BG_PAIR));
@@ -194,10 +195,13 @@ struct Fen {
 		topBar.hostname = util::get_hostname();
 		init_pair(MYCOLOR_USERNAME_PAIR, util::get_username_color(EUID), -1);
 
+		leftPane.isLeftFilesPane = true;
+
 		sel = fs::current_path();
 		update_panes(true);
-		if (!middlePane.entries.empty())
-			sel = middlePane.entries[0].path();
+		if (!rightPane.entries.empty())
+			sel = rightPane.entries[0].path();
+
 		update_panes(true); // Maybe false here?
 
 		topBar.sel = &sel;
