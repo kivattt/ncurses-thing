@@ -11,14 +11,16 @@
 
 namespace util {
 	int get_username_color(uid_t UID) {
-		if (UID == 0)
+		return COLOR_GREEN;
+
+/*		if (UID == 0)
 			return COLOR_RED;
 
 		struct passwd *pw = getpwuid(UID);
 		if (!pw)
 			return COLOR_YELLOW;
 
-		return COLOR_GREEN;
+		return COLOR_GREEN;*/
 	}
 
 	string get_username(uid_t UID) {

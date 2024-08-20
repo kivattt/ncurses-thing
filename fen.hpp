@@ -14,6 +14,7 @@
 #define MYCOLOR_USERNAME_PAIR 11
 #define MYCOLOR_WHITE_PAIR 12
 #define MYCOLOR_RED_BG_PAIR 13
+#define MYCOLOR_BRIGHTBLUE_PAIR 14
 
 using std::string;
 using std::vector;
@@ -27,8 +28,15 @@ struct TopBar {
 		attron(A_BOLD);
 
 		attron(COLOR_PAIR(MYCOLOR_USERNAME_PAIR));
-		int usernameLength = nc::print(username + "@" + hostname, x, y, width) + 1;
+		//int usernameLength = nc::print(username + "@" + hostname, x, y, width) + 1;
+		int usernameLength = nc::print(username, x, y, width);
 		attroff(COLOR_PAIR(MYCOLOR_USERNAME_PAIR));
+
+		usernameLength += nc::print("@", x + usernameLength, y, width);
+		attron(COLOR_PAIR(MYCOLOR_BRIGHTBLUE_PAIR));
+		usernameLength += nc::print(hostname, x + usernameLength, y, width);
+		attroff(COLOR_PAIR(MYCOLOR_BRIGHTBLUE_PAIR));
+		++usernameLength;
 
 		attron(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
 		int leftPathLength = nc::print(util::path_with_end_slash(sel->parent_path()), x + usernameLength, y, width);
@@ -176,6 +184,7 @@ struct Fen {
 		init_pair(MYCOLOR_BLACK_BG_PAIR, -1, COLOR_BLACK);
 		init_pair(MYCOLOR_WHITE_PAIR, COLOR_WHITE, -1);
 		init_pair(MYCOLOR_RED_BG_PAIR, -1, COLOR_RED);
+		init_pair(MYCOLOR_BRIGHTBLUE_PAIR, COLOR_CYAN, -1);
 
 		uid_t EUID = geteuid();
 		topBar.username = util::get_username(EUID);
