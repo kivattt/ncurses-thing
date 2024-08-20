@@ -229,6 +229,28 @@ struct Fen {
 		return !selectionWasOutOfBounds;
 	}
 
+	// Returns true if selection changed
+	bool go_top() {
+		if (middlePane.selectedEntryIndex == 0)
+			return false;
+
+		middlePane.selectedEntryIndex = 0;
+		sel = sel.parent_path() / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		update_panes();
+		return true;
+	}
+
+	// Returns true if selection changed
+	bool go_bottom() {
+		if (middlePane.selectedEntryIndex == MAX(0, middlePane.entries.size()-1))
+			return false;
+
+		middlePane.selectedEntryIndex = MAX(0, middlePane.entries.size()-1);
+		sel = sel.parent_path() / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		update_panes();
+		return true;
+	}
+
 	void draw(int x, int y, int width, int height) {
 		topBar.draw(x, y, width, height);
 

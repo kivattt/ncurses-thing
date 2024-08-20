@@ -56,6 +56,12 @@ int main() {
 			case KEY_DOWN:
 				redraw = fen.go_down();
 				break;
+			case KEY_HOME:
+				redraw = fen.go_top();
+				break;
+			case KEY_END:
+				redraw = fen.go_bottom();
+				break;
 			default:
 				redraw = false;
 				break;
