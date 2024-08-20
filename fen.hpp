@@ -146,17 +146,19 @@ struct Fen {
 
 	FilesPane leftPane, middlePane, rightPane;
 
-	void update_panes() {
+	void update_panes(bool forceReadDir = false) {
 		if (sel.parent_path() != "/") {
 			leftPane.folder = sel.parent_path().parent_path();
-			leftPane.read_folder();
+			if (forceReadDir)
+				leftPane.read_folder();
 			leftPane.set_selected_entry_from_string(sel.parent_path().filename());
 		} else {
 			leftPane.entries.clear();
 		}
 
 		middlePane.folder = sel.parent_path();
-		middlePane.read_folder();
+		if (forceReadDir)
+			middlePane.read_folder();
 
 		/*if (!middlePane.entries.empty())
 			sel = middlePane.entries[middlePane.selectedEntryIndex].path();*/
@@ -164,7 +166,9 @@ struct Fen {
 		middlePane.set_selected_entry_from_string(sel.filename());
 
 		rightPane.folder = sel;
-		rightPane.read_folder();
+		// TODO: Don't read rightpane folder when nothing happened
+//		if (forceReadDir)
+			rightPane.read_folder();
 	}
 
 	Fen() {
@@ -178,10 +182,10 @@ struct Fen {
 		init_pair(MYCOLOR_USERNAME_PAIR, util::get_username_color(EUID), -1);
 
 		sel = fs::current_path();
-		update_panes();
+		update_panes(true);
 		if (!middlePane.entries.empty())
 			sel = middlePane.entries[0].path();
-		update_panes();
+		update_panes(true); // Maybe false here?
 
 		topBar.sel = &sel;
 	}
@@ -190,7 +194,7 @@ struct Fen {
 	bool go_left() {
 		if (sel.parent_path() != "/") {
 			sel = sel.parent_path();
-			update_panes();
+			update_panes(true);
 			return true;
 		}
 		return false;
@@ -203,7 +207,7 @@ struct Fen {
 		}
 		sel = rightPane.entries[rightPane.selectedEntryIndex];
 //		sel = history.get_history_entry_for_path(wd);
-		update_panes();
+		update_panes(true);
 		return true;
 	}
 

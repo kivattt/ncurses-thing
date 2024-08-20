@@ -17,7 +17,7 @@ namespace nc {
 	}
 
 	void clear() {
-		::clear();
+		erase();
 	}
 
 	void show() {
