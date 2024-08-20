@@ -1,13 +1,18 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
+#include <filesystem>
 #include <unistd.h>
 #include <limits.h>
 #include <pwd.h>
+#include <grp.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+namespace fs = std::filesystem;
 
 namespace util {
 	int get_username_color(uid_t UID) {
@@ -41,6 +46,30 @@ namespace util {
 			return path + "/";
 
 		return path;
+	}
+
+	string file_permissions_string(fs::perms permissions) {
+		string ret = "";
+
+		const string permissionChars = "xwr";
+		for (int i = 8; i >= 0; i--)
+			ret += fs::perms::none == (fs::perms(1 << i) & permissions) ? '-' : permissionChars[i%3];
+
+		return ret;
+	}
+
+	string file_owner(struct stat &info) {
+		struct passwd *pw = getpwuid(info.st_uid);
+		if (pw)
+			return pw->pw_name;
+		return "unknown";
+	}
+
+	string file_group(struct stat &info) {
+		struct group *gr = getgrgid(info.st_gid);
+		if (gr)
+			return gr->gr_name;
+		return "unknown";
 	}
 }
 

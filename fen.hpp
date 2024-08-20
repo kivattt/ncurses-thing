@@ -15,6 +15,8 @@
 #define MYCOLOR_WHITE_PAIR 12
 #define MYCOLOR_RED_BG_PAIR 13
 #define MYCOLOR_BRIGHTBLUE_PAIR 14
+#define MYCOLOR_GREEN_BLACK_PAIR 15
+#define MYCOLOR_BLUE_BLACK_PAIR 16
 
 using std::string;
 using std::vector;
@@ -54,11 +56,27 @@ struct TopBar {
 };
 
 struct BottomBar {
+	fs::path *sel;
+
 	void draw(int x, int y, int width, int height) {
+		// TODO: Maybe use existing directory_entry at some point to minimize stat-ing
+		fs::file_status fileStat = fs::status(*sel);
+
 		attron(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
 		nc::fill_line(x, y, width);
-		nc::print("hello world", x, y, width);
 		attroff(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
+
+		attron(COLOR_PAIR(MYCOLOR_BLUE_BLACK_PAIR));
+		int filePermsLength = nc::print(util::file_permissions_string(fileStat.permissions()), x, y, width) + 1;
+		attroff(COLOR_PAIR(MYCOLOR_BLUE_BLACK_PAIR));
+
+		struct stat info;
+		stat(sel->string().c_str(), &info);
+		string fileOwners = util::file_owner(info) + ":" + util::file_group(info);
+
+		attron(COLOR_PAIR(MYCOLOR_GREEN_BLACK_PAIR));
+		nc::print(fileOwners, x+filePermsLength, y, width);
+		attroff(COLOR_PAIR(MYCOLOR_GREEN_BLACK_PAIR));
 	}
 };
 
@@ -189,6 +207,8 @@ struct Fen {
 		init_pair(MYCOLOR_WHITE_PAIR, COLOR_WHITE, -1);
 		init_pair(MYCOLOR_RED_BG_PAIR, -1, COLOR_RED);
 		init_pair(MYCOLOR_BRIGHTBLUE_PAIR, COLOR_CYAN, -1);
+		init_pair(MYCOLOR_GREEN_BLACK_PAIR, COLOR_GREEN, COLOR_BLACK);
+		init_pair(MYCOLOR_BLUE_BLACK_PAIR, COLOR_BLUE, COLOR_BLACK);
 
 		uid_t EUID = geteuid();
 		topBar.username = util::get_username(EUID);
@@ -205,6 +225,7 @@ struct Fen {
 		update_panes(true); // Maybe false here?
 
 		topBar.sel = &sel;
+		bottomBar.sel = &sel;
 	}
 
 	// Returns true if selection changed
