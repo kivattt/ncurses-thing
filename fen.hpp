@@ -32,7 +32,10 @@ struct TopBar {
 		int usernameLength = nc::print(username, x, y, width);
 		attroff(COLOR_PAIR(MYCOLOR_USERNAME_PAIR));
 
+		attroff(A_BOLD);
 		usernameLength += nc::print("@", x + usernameLength, y, width);
+		attron(A_BOLD);
+
 		attron(COLOR_PAIR(MYCOLOR_BRIGHTBLUE_PAIR));
 		usernameLength += nc::print(hostname, x + usernameLength, y, width);
 		attroff(COLOR_PAIR(MYCOLOR_BRIGHTBLUE_PAIR));
