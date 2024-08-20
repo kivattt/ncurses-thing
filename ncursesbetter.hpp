@@ -12,6 +12,7 @@ namespace nc {
 		noecho();
 		curs_set(0);
 		keypad(stdscr, true);
+		mousemask(ALL_MOUSE_EVENTS, NULL);
 		start_color();
 		use_default_colors();
 	}

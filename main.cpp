@@ -27,6 +27,16 @@ int main() {
 			case KEY_RESIZE:
 				redraw = true;
 				break;
+			case KEY_MOUSE:
+				MEVENT mouseEvent;
+				if (getmouse(&mouseEvent) != OK)
+					break;
+
+				if (mouseEvent.bstate & BUTTON4_PRESSED)
+					redraw = fen.go_up();
+				else if (mouseEvent.bstate & BUTTON5_PRESSED)
+					redraw = fen.go_down();
+				break;
 			case 'q':
 				running = false;
 				break;
