@@ -52,10 +52,18 @@ namespace util {
 		return hostname;
 	}
 
-	string path_with_end_slash(string path) {
+	string path_with_trailing_separator(string path) {
 		if (path.empty() || path.back() != '/')
 			return path + "/";
 
+		return path;
+	}
+
+	string path_without_trailing_separator(string path) {
+		if (path.empty() || path.back() != '/')
+			return path;
+
+		path.pop_back();
 		return path;
 	}
 

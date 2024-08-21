@@ -36,7 +36,7 @@ struct TopBar {
 		++printCursor;
 
 		nc::with_attr(COLOR_PAIR(MYCOLOR_AQUA_PAIR), [&](){
-			printCursor += nc::print(util::path_with_end_slash(sel->parent_path()), x + printCursor, y, width);
+			printCursor += nc::print(util::path_with_trailing_separator(sel->parent_path()), x + printCursor, y, width);
 		});
 
 		nc::with_attr(COLOR_PAIR(MYCOLOR_WHITE_PAIR), [&](){
@@ -48,10 +48,11 @@ struct TopBar {
 };
 
 struct FilesPane {
-	bool isLeftFilesPane = false;
+	bool isLeftFilesPane = false, isRightFilesPane = false;
 	vector <fs::directory_entry> entries;
 	int selectedEntryIndex = 0;
 	string folder;
+	fs::path *wd, *sel;
 
 	// Updates the entries
 	void read_folder() {
@@ -102,7 +103,7 @@ struct FilesPane {
 	}
 
 	void draw(int x, int y, int width, int height) {
-		if (entries.empty() && folder != "/" && !isLeftFilesPane) {
+		if (entries.empty() && folder != "/" && !isLeftFilesPane && fs::is_directory(*sel) && !(isRightFilesPane && *sel == *wd)) {
 			nc::with_attr(COLOR_PAIR(MYCOLOR_RED_BG_PAIR), [&](){
 				nc::print("empty", x, y, width);
 			});
@@ -132,14 +133,29 @@ struct FilesPane {
 struct BottomBar {
 	fs::path *sel;
 	FilesPane *middlePane;
+	string alternateText = "";
+
+	// In the next screen refresh, text will be shown instead of the normal file info
+	// Does nothing if text is an empty string ""
+	void temporarily_show_alternate_text(string text) {
+		alternateText = text;
+	}
 
 	void draw(int x, int y, int width, int height) {
-		// TODO: Maybe use existing directory_entry at some point to minimize stat-ing
-		fs::file_status fileStat = fs::status(*sel);
-
 		nc::with_attr(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR), [&](){
 			nc::fill_line(' ', x, y, width);
 		});
+
+		if (!alternateText.empty()) {
+			nc::with_attr(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR), [&](){
+				nc::print(alternateText, x, y, width);
+			});
+			alternateText = "";
+			return;
+		}
+
+		// TODO: Maybe use existing directory_entry at some point to minimize stat-ing
+		fs::file_status fileStat = fs::status(*sel);
 
 		int printCursor;
 		nc::with_attr(COLOR_PAIR(MYCOLOR_CYAN_BLACK_PAIR), [&](){
@@ -174,33 +190,32 @@ struct BottomBar {
 struct Fen {
 	TopBar topBar;
 	BottomBar bottomBar;
-	fs::path sel;
+	fs::path wd, sel;
 
 	FilesPane leftPane, middlePane, rightPane;
 
 	void update_panes(bool forceReadDir = false) {
-		if (sel.parent_path() != "/") {
-			leftPane.folder = sel.parent_path().parent_path();
-			if (forceReadDir)
-				leftPane.read_folder();
-			leftPane.set_selected_entry_from_string(sel.parent_path().filename());
-		} else {
-			leftPane.entries.clear();
-		}
+		leftPane.folder = wd.parent_path();
+		if (forceReadDir)
+			leftPane.read_folder();
 
-		middlePane.folder = sel.parent_path();
+		middlePane.folder = wd;
 		if (forceReadDir)
 			middlePane.read_folder();
 
-		/*if (!middlePane.entries.empty())
-			sel = middlePane.entries[middlePane.selectedEntryIndex].path();*/
+		if (wd == "/")
+			leftPane.entries.clear();
+		else
+			leftPane.set_selected_entry_from_string(wd.filename());
 
 		middlePane.set_selected_entry_from_string(sel.filename());
+		//middlePane.keep_selection_in_bounds();
 
+		sel = util::path_without_trailing_separator(wd / middlePane.get_entry_from_index(middlePane.selectedEntryIndex));
 		rightPane.folder = sel;
-		// TODO: Don't read rightpane folder when nothing happened
-//		if (forceReadDir)
-			rightPane.read_folder();
+		rightPane.read_folder();
+
+		bottomBar.temporarily_show_alternate_text("wd: " + wd.string() + ", sel: " + sel.string());
 	}
 
 	Fen() {
@@ -210,9 +225,11 @@ struct Fen {
 		topBar.usernameColorPair = util::get_username_colorpair(EUID);
 
 		leftPane.isLeftFilesPane = true;
+		rightPane.isRightFilesPane = true;
 
-		sel = fs::current_path();
-		update_panes(true);
+		wd = fs::current_path();
+/*		sel = fs::current_path();
+		update_panes(true);*/
 		if (!rightPane.entries.empty())
 			sel = rightPane.entries[0].path();
 
@@ -221,12 +238,21 @@ struct Fen {
 		topBar.sel = &sel;
 		bottomBar.sel = &sel;
 		bottomBar.middlePane = &middlePane;
+
+		leftPane.sel = &sel;
+		middlePane.sel = &sel;
+		rightPane.sel = &sel;
+
+		leftPane.wd = &wd;
+		middlePane.wd = &wd;
+		rightPane.wd = &wd;
 	}
 
 	// Returns true if selection changed
 	bool go_left() {
-		if (sel.parent_path() != "/") {
-			sel = sel.parent_path();
+		if (wd != "/") {
+			sel = wd;
+			wd = wd.parent_path();
 			update_panes(true);
 			return true;
 		}
@@ -235,10 +261,14 @@ struct Fen {
 
 	// Returns true if selection changed
 	bool go_right() {
-		if (rightPane.entries.empty()) {
+		if (middlePane.entries.empty())
 			return false;
-		}
-		sel = rightPane.entries[rightPane.selectedEntryIndex];
+
+		if (!fs::is_directory(sel))
+			return false;
+
+		wd = sel;
+		sel = wd / rightPane.get_entry_from_index(rightPane.selectedEntryIndex);
 //		sel = history.get_history_entry_for_path(wd);
 		update_panes(true);
 		return true;
@@ -248,7 +278,7 @@ struct Fen {
 	bool go_up() {
 		--middlePane.selectedEntryIndex;
 		bool selectionWasOutOfBounds = middlePane.keep_selection_in_bounds();
-		sel = sel.parent_path() / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		sel = wd / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
 		update_panes();
 		return !selectionWasOutOfBounds;
 	}
@@ -257,7 +287,7 @@ struct Fen {
 	bool go_down() {
 		++middlePane.selectedEntryIndex;
 		bool selectionWasOutOfBounds = middlePane.keep_selection_in_bounds();
-		sel = sel.parent_path() / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		sel = wd / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
 		update_panes();
 		return !selectionWasOutOfBounds;
 	}
