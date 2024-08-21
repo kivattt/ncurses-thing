@@ -21,6 +21,10 @@ namespace nc {
 		erase();
 	}
 
+	void sync() {
+		::clear();
+	}
+
 	void show() {
 		refresh();
 	}

@@ -64,6 +64,9 @@ int main() {
 			case KEY_END:
 				redraw = fen.go_bottom();
 				break;
+			case 269: // F5
+				nc::sync();
+				break;
 			default:
 				redraw = false;
 				break;
