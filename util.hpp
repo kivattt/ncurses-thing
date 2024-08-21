@@ -117,9 +117,13 @@ namespace util {
 		if (localTime == nullptr)
 			return "date unknown";
 
-		string str = std::asctime(localTime);
-		str.pop_back();
-		return str;
+//		string str = std::asctime(localTime);
+//		str.pop_back();
+//		return str;
+
+		char buf[256];
+		std::strftime(buf, sizeof(buf), "%c", localTime);
+		return buf;
 	}
 }
 
