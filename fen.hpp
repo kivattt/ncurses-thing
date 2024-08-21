@@ -31,9 +31,9 @@ struct TopBar {
 		usernameLength += nc::print("@", x + usernameLength, y, width);
 		attron(A_BOLD);
 
-		attron(COLOR_PAIR(MYCOLOR_BRIGHTBLUE_PAIR));
+		attron(COLOR_PAIR(MYCOLOR_CYAN_PAIR));
 		usernameLength += nc::print(hostname, x + usernameLength, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_BRIGHTBLUE_PAIR));
+		attroff(COLOR_PAIR(MYCOLOR_CYAN_PAIR));
 		++usernameLength;
 
 		attron(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
@@ -45,41 +45,6 @@ struct TopBar {
 		attroff(COLOR_PAIR(MYCOLOR_WHITE_PAIR));
 
 		attroff(A_BOLD);
-	}
-};
-
-struct BottomBar {
-	fs::path *sel;
-
-	void draw(int x, int y, int width, int height) {
-		// TODO: Maybe use existing directory_entry at some point to minimize stat-ing
-		fs::file_status fileStat = fs::status(*sel);
-
-		attron(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
-		nc::fill_line(x, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
-
-		attron(COLOR_PAIR(MYCOLOR_BLUE_BLACK_PAIR));
-		int bottomBarPrintCursor = nc::print(util::file_permissions_string(fileStat.permissions()), x, y, width) + 1;
-		attroff(COLOR_PAIR(MYCOLOR_BLUE_BLACK_PAIR));
-
-		struct stat info;
-		stat(sel->string().c_str(), &info);
-
-		attron(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
-		bottomBarPrintCursor += nc::print(util::file_owner(info) + ":", x + bottomBarPrintCursor, y, width);
-		attroff(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
-
-		attron(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
-		bottomBarPrintCursor += nc::print(util::file_group(info), x + bottomBarPrintCursor, y, width);
-		attroff(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
-		
-		/*
-		string fileOwners = util::file_owner(info) + ":" + util::file_group(info);
-
-		attron(COLOR_PAIR(MYCOLOR_GREEN_BLACK_PAIR));
-		nc::print(fileOwners, x+filePermsLength, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_GREEN_BLACK_PAIR));*/
 	}
 };
 
@@ -166,6 +131,48 @@ struct FilesPane {
 	}
 };
 
+struct BottomBar {
+	fs::path *sel;
+	FilesPane *middlePane;
+
+	void draw(int x, int y, int width, int height) {
+		// TODO: Maybe use existing directory_entry at some point to minimize stat-ing
+		fs::file_status fileStat = fs::status(*sel);
+
+		attron(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
+		nc::fill_line(x, y, width);
+		attroff(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
+
+		attron(COLOR_PAIR(MYCOLOR_CYAN_BLACK_PAIR));
+		int bottomBarPrintCursor = nc::print(util::file_permissions_string(fileStat.permissions()), x, y, width) + 1;
+		attroff(COLOR_PAIR(MYCOLOR_CYAN_BLACK_PAIR));
+
+		struct stat info;
+		stat(sel->string().c_str(), &info);
+
+		attron(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
+		bottomBarPrintCursor += nc::print(util::file_owner(info) + ":", x + bottomBarPrintCursor, y, width);
+		attroff(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
+
+		attron(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
+		bottomBarPrintCursor += nc::print(util::file_group(info), x + bottomBarPrintCursor, y, width) + 1;
+		attroff(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
+
+		attron(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
+		try {
+			string dateText = util::time_to_string(fs::last_write_time(*sel));
+			bottomBarPrintCursor += nc::print(dateText, x + bottomBarPrintCursor, y, width);
+		} catch (fs::filesystem_error &e) {
+			bottomBarPrintCursor += nc::print("date unknown", x + bottomBarPrintCursor, y, width);
+		}
+
+		string indexText = std::to_string(middlePane->selectedEntryIndex + 1) + "/" + std::to_string(middlePane->entries.size());
+		nc::print(indexText, width - indexText.size(), y, width);
+
+		attroff(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
+	}
+};
+
 struct Fen {
 	TopBar topBar;
 	BottomBar bottomBar;
@@ -203,8 +210,8 @@ struct Fen {
 		init_pair(MYCOLOR_BLACK_BG_PAIR, -1, COLOR_BLACK);
 		init_pair(MYCOLOR_WHITE_PAIR, COLOR_WHITE, -1);
 		init_pair(MYCOLOR_RED_BG_PAIR, -1, COLOR_RED);
-		init_pair(MYCOLOR_BRIGHTBLUE_PAIR, COLOR_CYAN, -1);
-		init_pair(MYCOLOR_BLUE_BLACK_PAIR, COLOR_BLUE, COLOR_BLACK);
+		init_pair(MYCOLOR_CYAN_PAIR, COLOR_CYAN, -1);
+		init_pair(MYCOLOR_CYAN_BLACK_PAIR, COLOR_CYAN, COLOR_BLACK);
 
 		init_pair(MYCOLOR_GREEN_PAIR, COLOR_GREEN, -1);
 		init_pair(MYCOLOR_RED_PAIR, COLOR_RED, -1);
@@ -213,6 +220,8 @@ struct Fen {
 		init_pair(MYCOLOR_GREEN_BLACK_PAIR, COLOR_GREEN, COLOR_BLACK);
 		init_pair(MYCOLOR_RED_BLACK_PAIR, COLOR_RED, COLOR_BLACK);
 		init_pair(MYCOLOR_YELLOW_BLACK_PAIR, COLOR_YELLOW, COLOR_BLACK);
+		//int tealColor = init_color(MYCOLOR_TEAL, 0x00, 0x80, 0x80);
+		//init_pair(MYCOLOR_TEAL_BLACK_PAIR, tealColor, COLOR_BLACK);
 
 
 		uid_t EUID = geteuid();
@@ -231,6 +240,7 @@ struct Fen {
 
 		topBar.sel = &sel;
 		bottomBar.sel = &sel;
+		bottomBar.middlePane = &middlePane;
 	}
 
 	// Returns true if selection changed

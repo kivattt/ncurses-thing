@@ -2,6 +2,7 @@
 #define UTIL_HPP
 
 #include <filesystem>
+#include <chrono>
 #include <unistd.h>
 #include <limits.h>
 #include <pwd.h>
@@ -108,6 +109,17 @@ namespace util {
 			attroff(A_BOLD);
 			attroff(COLOR_PAIR(MYCOLOR_GREEN_PAIR));
 		}
+	}
+
+	string time_to_string(const fs::file_time_type &ftime) {
+		std::time_t cftime = std::chrono::system_clock::to_time_t(std::chrono::file_clock::to_sys(ftime));
+		std::tm *localTime = std::localtime(&cftime);
+		if (localTime == nullptr)
+			return "date unknown";
+
+		string str = std::asctime(localTime);
+		str.pop_back();
+		return str;
 	}
 }
 
