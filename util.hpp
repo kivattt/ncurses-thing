@@ -29,6 +29,10 @@ namespace util {
 	}
 
 	int get_groupname_colorpair(gid_t GID, bool withBlackBackground = false) {
+		struct group *gr = getgrgid(GID);
+		if (!gr)
+			return withBlackBackground ? MYCOLOR_YELLOW_BLACK_PAIR : MYCOLOR_YELLOW_PAIR;
+
 		if (GID == 0)
 			return withBlackBackground ? MYCOLOR_RED_BLACK_PAIR : MYCOLOR_RED_PAIR;
 		return withBlackBackground ? MYCOLOR_GREEN_BLACK_PAIR : MYCOLOR_GREEN_PAIR;
