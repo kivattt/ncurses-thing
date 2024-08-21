@@ -81,6 +81,34 @@ namespace util {
 			return gr->gr_name;
 		return "unknown";
 	}
+
+	void file_color_attron(const fs::directory_entry &entry) {
+		if (entry.is_directory()) {
+			attron(A_BOLD);
+			attron(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
+			return;
+		}
+
+		fs::file_status fileStat = fs::status(entry);
+		if ((fileStat.permissions() & fs::perms(0b1001001)) != fs::perms::none) {
+			attron(A_BOLD);
+			attron(COLOR_PAIR(MYCOLOR_GREEN_PAIR));
+		}
+	}
+
+	void file_color_attroff(const fs::directory_entry &entry) {
+		if (entry.is_directory()) {
+			attroff(A_BOLD);
+			attroff(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
+			return;
+		}
+
+		fs::file_status fileStat = fs::status(entry);
+		if ((fileStat.permissions() & fs::perms(0b1001001)) != fs::perms::none) {
+			attroff(A_BOLD);
+			attroff(COLOR_PAIR(MYCOLOR_GREEN_PAIR));
+		}
+	}
 }
 
 #endif // UTIL_HPP

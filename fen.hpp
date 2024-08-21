@@ -153,21 +153,15 @@ struct FilesPane {
 				attron(A_REVERSE);
 
 			fs::directory_entry entry = entries[i];
-			if (entry.is_directory()) {
-				attron(A_BOLD);
-				attron(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
-			}
+			util::file_color_attron(entry);
 
 			nc::fill_line(x, y+i, width);
 			nc::print(entry.path().filename().string(), x+1, y+i, width-1);
 
+			util::file_color_attroff(entry);
+
 			if (i == selectedEntryIndex)
 				attroff(A_REVERSE);
-
-			if (entry.is_directory()) {
-				attroff(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
-				attroff(A_BOLD);
-			}
 		}
 	}
 };
