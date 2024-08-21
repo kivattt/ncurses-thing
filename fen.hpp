@@ -8,15 +8,7 @@
 #include "util.hpp"
 #include "ncursesbetter.hpp"
 
-#define NCURSES_COLOR 1000/255
-#define MYCOLOR_AQUA_PAIR 8
-#define MYCOLOR_BLACK_BG_PAIR 9
-#define MYCOLOR_USERNAME_PAIR 11
-#define MYCOLOR_WHITE_PAIR 12
-#define MYCOLOR_RED_BG_PAIR 13
-#define MYCOLOR_BRIGHTBLUE_PAIR 14
-#define MYCOLOR_GREEN_BLACK_PAIR 15
-#define MYCOLOR_BLUE_BLACK_PAIR 16
+#include "colors.hpp"
 
 using std::string;
 using std::vector;
@@ -24,15 +16,16 @@ namespace fs = std::filesystem;
 
 struct TopBar {
 	string username, hostname;
+	int usernameColorPair;
 	fs::path *sel;
 
 	void draw(int x, int y, int width, int height) {
 		attron(A_BOLD);
 
-		attron(COLOR_PAIR(MYCOLOR_USERNAME_PAIR));
+		attron(COLOR_PAIR(usernameColorPair));
 		//int usernameLength = nc::print(username + "@" + hostname, x, y, width) + 1;
 		int usernameLength = nc::print(username, x, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_USERNAME_PAIR));
+		attroff(COLOR_PAIR(usernameColorPair));
 
 		attroff(A_BOLD);
 		usernameLength += nc::print("@", x + usernameLength, y, width);
@@ -67,16 +60,26 @@ struct BottomBar {
 		attroff(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
 
 		attron(COLOR_PAIR(MYCOLOR_BLUE_BLACK_PAIR));
-		int filePermsLength = nc::print(util::file_permissions_string(fileStat.permissions()), x, y, width) + 1;
+		int bottomBarPrintCursor = nc::print(util::file_permissions_string(fileStat.permissions()), x, y, width) + 1;
 		attroff(COLOR_PAIR(MYCOLOR_BLUE_BLACK_PAIR));
 
 		struct stat info;
 		stat(sel->string().c_str(), &info);
+
+		attron(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
+		bottomBarPrintCursor += nc::print(util::file_owner(info) + ":", x + bottomBarPrintCursor, y, width);
+		attroff(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
+
+		attron(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
+		bottomBarPrintCursor += nc::print(util::file_group(info), x + bottomBarPrintCursor, y, width);
+		attroff(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
+		
+		/*
 		string fileOwners = util::file_owner(info) + ":" + util::file_group(info);
 
 		attron(COLOR_PAIR(MYCOLOR_GREEN_BLACK_PAIR));
 		nc::print(fileOwners, x+filePermsLength, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_GREEN_BLACK_PAIR));
+		attroff(COLOR_PAIR(MYCOLOR_GREEN_BLACK_PAIR));*/
 	}
 };
 
@@ -207,13 +210,21 @@ struct Fen {
 		init_pair(MYCOLOR_WHITE_PAIR, COLOR_WHITE, -1);
 		init_pair(MYCOLOR_RED_BG_PAIR, -1, COLOR_RED);
 		init_pair(MYCOLOR_BRIGHTBLUE_PAIR, COLOR_CYAN, -1);
-		init_pair(MYCOLOR_GREEN_BLACK_PAIR, COLOR_GREEN, COLOR_BLACK);
 		init_pair(MYCOLOR_BLUE_BLACK_PAIR, COLOR_BLUE, COLOR_BLACK);
+
+		init_pair(MYCOLOR_GREEN_PAIR, COLOR_GREEN, -1);
+		init_pair(MYCOLOR_RED_PAIR, COLOR_RED, -1);
+		init_pair(MYCOLOR_YELLOW_PAIR, COLOR_YELLOW, -1);
+
+		init_pair(MYCOLOR_GREEN_BLACK_PAIR, COLOR_GREEN, COLOR_BLACK);
+		init_pair(MYCOLOR_RED_BLACK_PAIR, COLOR_RED, COLOR_BLACK);
+		init_pair(MYCOLOR_YELLOW_BLACK_PAIR, COLOR_YELLOW, COLOR_BLACK);
+
 
 		uid_t EUID = geteuid();
 		topBar.username = util::get_username(EUID);
 		topBar.hostname = util::get_hostname();
-		init_pair(MYCOLOR_USERNAME_PAIR, util::get_username_color(EUID), -1);
+		topBar.usernameColorPair = util::get_username_colorpair(EUID);
 
 		leftPane.isLeftFilesPane = true;
 

@@ -9,23 +9,29 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "colors.hpp"
+
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 namespace fs = std::filesystem;
 
 namespace util {
-	int get_username_color(uid_t UID) {
-		return COLOR_GREEN;
-
-/*		if (UID == 0)
-			return COLOR_RED;
+	int get_username_colorpair(uid_t UID, bool withBlackBackground = false) {
+		if (UID == 0)
+			return withBlackBackground ? MYCOLOR_RED_BLACK_PAIR : MYCOLOR_RED_PAIR;
 
 		struct passwd *pw = getpwuid(UID);
 		if (!pw)
-			return COLOR_YELLOW;
+			return withBlackBackground ? MYCOLOR_YELLOW_BLACK_PAIR : MYCOLOR_YELLOW_PAIR;
 
-		return COLOR_GREEN;*/
+		return withBlackBackground ? MYCOLOR_GREEN_BLACK_PAIR : MYCOLOR_GREEN_PAIR;
+	}
+
+	int get_groupname_colorpair(gid_t GID, bool withBlackBackground = false) {
+		if (GID == 0)
+			return withBlackBackground ? MYCOLOR_RED_BLACK_PAIR : MYCOLOR_RED_PAIR;
+		return withBlackBackground ? MYCOLOR_GREEN_BLACK_PAIR : MYCOLOR_GREEN_PAIR;
 	}
 
 	string get_username(uid_t UID) {
