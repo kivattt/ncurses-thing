@@ -2,6 +2,7 @@
 #define NCURSESBETTER_HPP
 
 #include <string>
+#include <functional>
 #include <ncurses.h>
 
 using std::string;
@@ -21,6 +22,7 @@ namespace nc {
 		erase();
 	}
 
+	// Re-draws everything from scratch in the next nc::show() call, to fix any possible broken output
 	void sync() {
 		::clear();
 	}
@@ -29,30 +31,39 @@ namespace nc {
 		refresh();
 	}
 
+	void with_attr(const int ncursesAttributes, std::function<void ()> fn) {
+		attron(ncursesAttributes);
+		fn();
+		attroff(ncursesAttributes);
+	}
+
+	// Returns terminal width
 	int get_width() {
 		int width, height;
 		getmaxyx(stdscr, height, width);
 		return width;
 	}
 
+	// Returns terminal height
 	int get_height() {
 		int width, height;
 		getmaxyx(stdscr, height, width);
 		return height;
 	}
 
-	void set_cell(int x, int y, char character) {
+	void set_cell(const int x, const int y, const chtype character) {
 		mvaddch(y, x, character);
 	}
 
+	// Draws text at x,y up to xMax-1
 	// Returns amount of characters printed
-	int print(string text, int x, int y, int width) {
-		if (x >= width)
+	int print(const string &text, const int x, const int y, const int xMax) {
+		if (x >= xMax)
 			return 0;
 
 		int i = 0;
 		for (; i < text.length(); i++) {
-			if (x+i >= width)
+			if (x+i >= xMax)
 				break;
 
 			set_cell(x+i, y, text[i]);
@@ -61,11 +72,10 @@ namespace nc {
 		return i;
 	}
 
-	// Fills horizontal line at x,y with 'width' number of spaces
-	void fill_line(int x, int y, int width) {
-		for (int i = x; i < width; i++) {
-			set_cell(i, y, ' ');
-		}
+	// Fills horizontal line with the specified character at x,y up to xMax-1
+	void fill_line(const chtype character, const int x, const int y, const int xMax) {
+		for (int i = x; i < xMax; i++)
+			set_cell(i, y, character);
 	}
 
 	void fini() {

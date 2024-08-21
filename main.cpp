@@ -3,12 +3,14 @@
 
 #include "ncursesbetter.hpp"
 #include "fen.hpp"
+#include "colors.hpp"
 
 int main() {
 	std::cout << "\x1b[22t"; // Push current terminal title
 	std::cout << "\x1b]0;2.5fen\x07"; // Set terminal title to "2.5fen"
 
 	nc::init();
+	init_all_color_pairs(); // This has to be called after ncurses init
 
 	Fen fen;
 

@@ -83,32 +83,15 @@ namespace util {
 		return "unknown";
 	}
 
-	void file_color_attron(const fs::directory_entry &entry) {
-		if (entry.is_directory()) {
-			attron(A_BOLD);
-			attron(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
-			return;
-		}
+	int file_color_attributes(const fs::directory_entry &entry) {
+		if (entry.is_directory())
+			return A_BOLD | COLOR_PAIR(MYCOLOR_AQUA_PAIR);
 
 		fs::file_status fileStat = fs::status(entry);
-		if ((fileStat.permissions() & fs::perms(0b1001001)) != fs::perms::none) {
-			attron(A_BOLD);
-			attron(COLOR_PAIR(MYCOLOR_GREEN_PAIR));
-		}
-	}
+		if ((fileStat.permissions() & fs::perms(0b1001001)) != fs::perms::none)
+			return A_BOLD | COLOR_PAIR(MYCOLOR_GREEN_PAIR);
 
-	void file_color_attroff(const fs::directory_entry &entry) {
-		if (entry.is_directory()) {
-			attroff(A_BOLD);
-			attroff(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
-			return;
-		}
-
-		fs::file_status fileStat = fs::status(entry);
-		if ((fileStat.permissions() & fs::perms(0b1001001)) != fs::perms::none) {
-			attroff(A_BOLD);
-			attroff(COLOR_PAIR(MYCOLOR_GREEN_PAIR));
-		}
+		return A_NORMAL;
 	}
 
 	string time_to_string(const fs::file_time_type &ftime) {
@@ -116,10 +99,6 @@ namespace util {
 		std::tm *localTime = std::localtime(&cftime);
 		if (localTime == nullptr)
 			return "date unknown";
-
-//		string str = std::asctime(localTime);
-//		str.pop_back();
-//		return str;
 
 		char buf[256];
 		std::strftime(buf, sizeof(buf), "%c", localTime);

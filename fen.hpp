@@ -20,29 +20,28 @@ struct TopBar {
 	fs::path *sel;
 
 	void draw(int x, int y, int width, int height) {
+		int printCursor;
+		nc::with_attr(A_BOLD | COLOR_PAIR(usernameColorPair), [&](){
+			printCursor = nc::print(username, x, y, width);
+		});
+
+		printCursor += nc::print("@", x + printCursor, y, width);
+
 		attron(A_BOLD);
 
-		attron(COLOR_PAIR(usernameColorPair));
-		//int usernameLength = nc::print(username + "@" + hostname, x, y, width) + 1;
-		int usernameLength = nc::print(username, x, y, width);
-		attroff(COLOR_PAIR(usernameColorPair));
+		nc::with_attr(COLOR_PAIR(MYCOLOR_CYAN_PAIR), [&](){
+			printCursor += nc::print(hostname, x + printCursor, y, width);
+		});
 
-		attroff(A_BOLD);
-		usernameLength += nc::print("@", x + usernameLength, y, width);
-		attron(A_BOLD);
+		++printCursor;
 
-		attron(COLOR_PAIR(MYCOLOR_CYAN_PAIR));
-		usernameLength += nc::print(hostname, x + usernameLength, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_CYAN_PAIR));
-		++usernameLength;
+		nc::with_attr(COLOR_PAIR(MYCOLOR_AQUA_PAIR), [&](){
+			printCursor += nc::print(util::path_with_end_slash(sel->parent_path()), x + printCursor, y, width);
+		});
 
-		attron(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
-		int leftPathLength = nc::print(util::path_with_end_slash(sel->parent_path()), x + usernameLength, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_AQUA_PAIR));
-
-		attron(COLOR_PAIR(MYCOLOR_WHITE_PAIR));
-		nc::print(sel->filename(), x + usernameLength + leftPathLength, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_WHITE_PAIR));
+		nc::with_attr(COLOR_PAIR(MYCOLOR_WHITE_PAIR), [&](){
+			nc::print(sel->filename(), x + printCursor, y, width);
+		});
 
 		attroff(A_BOLD);
 	}
@@ -104,9 +103,9 @@ struct FilesPane {
 
 	void draw(int x, int y, int width, int height) {
 		if (entries.empty() && folder != "/" && !isLeftFilesPane) {
-			attron(COLOR_PAIR(MYCOLOR_RED_BG_PAIR));
-			nc::print("empty", x, y, width);
-			attroff(COLOR_PAIR(MYCOLOR_RED_BG_PAIR));
+			nc::with_attr(COLOR_PAIR(MYCOLOR_RED_BG_PAIR), [&](){
+				nc::print("empty", x, y, width);
+			});
 			return;
 		}
 
@@ -118,12 +117,11 @@ struct FilesPane {
 				attron(A_REVERSE);
 
 			fs::directory_entry entry = entries[i];
-			util::file_color_attron(entry);
 
-			nc::fill_line(x, y+i, width);
-			nc::print(entry.path().filename().string(), x+1, y+i, width-1);
-
-			util::file_color_attroff(entry);
+			nc::with_attr(util::file_color_attributes(entry), [&](){
+				nc::fill_line(' ', x, y+i, width);
+				nc::print(entry.path().filename().string(), x+1, y+i, width-1);
+			});
 
 			if (i == selectedEntryIndex)
 				attroff(A_REVERSE);
@@ -139,37 +137,37 @@ struct BottomBar {
 		// TODO: Maybe use existing directory_entry at some point to minimize stat-ing
 		fs::file_status fileStat = fs::status(*sel);
 
-		attron(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
-		nc::fill_line(x, y, width);
-		attroff(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
+		nc::with_attr(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR), [&](){
+			nc::fill_line(' ', x, y, width);
+		});
 
-		attron(COLOR_PAIR(MYCOLOR_CYAN_BLACK_PAIR));
-		int bottomBarPrintCursor = nc::print(util::file_permissions_string(fileStat.permissions()), x, y, width) + 1;
-		attroff(COLOR_PAIR(MYCOLOR_CYAN_BLACK_PAIR));
+		int printCursor;
+		nc::with_attr(COLOR_PAIR(MYCOLOR_CYAN_BLACK_PAIR), [&](){
+			printCursor = nc::print(util::file_permissions_string(fileStat.permissions()), x, y, width) + 1;
+		});
 
 		struct stat info;
 		stat(sel->string().c_str(), &info);
 
-		attron(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
-		bottomBarPrintCursor += nc::print(util::file_owner(info) + ":", x + bottomBarPrintCursor, y, width);
-		attroff(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)));
+		nc::with_attr(COLOR_PAIR(util::get_username_colorpair(info.st_uid, true)), [&](){
+			printCursor += nc::print(util::file_owner(info) + ":", x + printCursor, y, width);
+		});
 
-		attron(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
-		bottomBarPrintCursor += nc::print(util::file_group(info), x + bottomBarPrintCursor, y, width) + 1;
-		attroff(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)));
+		nc::with_attr(COLOR_PAIR(util::get_groupname_colorpair(info.st_gid, true)), [&](){
+			printCursor += nc::print(util::file_group(info), x + printCursor, y, width) + 1;
+		});
 
-		attron(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
-		try {
-			string dateText = util::time_to_string(fs::last_write_time(*sel));
-			bottomBarPrintCursor += nc::print(dateText, x + bottomBarPrintCursor, y, width);
-		} catch (fs::filesystem_error &e) {
-			bottomBarPrintCursor += nc::print("date unknown", x + bottomBarPrintCursor, y, width);
-		}
+		nc::with_attr(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR), [&](){
+			try {
+				string dateText = util::time_to_string(fs::last_write_time(*sel));
+				printCursor += nc::print(dateText, x + printCursor, y, width);
+			} catch (fs::filesystem_error &e) {
+				printCursor += nc::print("date unknown", x + printCursor, y, width);
+			}
 
-		string indexText = std::to_string(middlePane->selectedEntryIndex + 1) + "/" + std::to_string(middlePane->entries.size());
-		nc::print(indexText, width - indexText.size(), y, width);
-
-		attroff(COLOR_PAIR(MYCOLOR_BLACK_BG_PAIR));
+			string indexText = std::to_string(middlePane->selectedEntryIndex + 1) + "/" + std::to_string(middlePane->entries.size());
+			nc::print(indexText, width - indexText.size(), y, width);
+		});
 	}
 };
 
@@ -206,24 +204,6 @@ struct Fen {
 	}
 
 	Fen() {
-		init_pair(MYCOLOR_AQUA_PAIR, COLOR_BLUE, -1);
-		init_pair(MYCOLOR_BLACK_BG_PAIR, -1, COLOR_BLACK);
-		init_pair(MYCOLOR_WHITE_PAIR, COLOR_WHITE, -1);
-		init_pair(MYCOLOR_RED_BG_PAIR, -1, COLOR_RED);
-		init_pair(MYCOLOR_CYAN_PAIR, COLOR_CYAN, -1);
-		init_pair(MYCOLOR_CYAN_BLACK_PAIR, COLOR_CYAN, COLOR_BLACK);
-
-		init_pair(MYCOLOR_GREEN_PAIR, COLOR_GREEN, -1);
-		init_pair(MYCOLOR_RED_PAIR, COLOR_RED, -1);
-		init_pair(MYCOLOR_YELLOW_PAIR, COLOR_YELLOW, -1);
-
-		init_pair(MYCOLOR_GREEN_BLACK_PAIR, COLOR_GREEN, COLOR_BLACK);
-		init_pair(MYCOLOR_RED_BLACK_PAIR, COLOR_RED, COLOR_BLACK);
-		init_pair(MYCOLOR_YELLOW_BLACK_PAIR, COLOR_YELLOW, COLOR_BLACK);
-		//int tealColor = init_color(MYCOLOR_TEAL, 0x00, 0x80, 0x80);
-		//init_pair(MYCOLOR_TEAL_BLACK_PAIR, tealColor, COLOR_BLACK);
-
-
 		uid_t EUID = geteuid();
 		topBar.username = util::get_username(EUID);
 		topBar.hostname = util::get_hostname();
@@ -313,7 +293,6 @@ struct Fen {
 		leftPane.draw(x, y+1, leftWidth-1, height-1);
 		middlePane.draw(leftWidth, y+1, midAndRightWidth-1, height-1);
 		rightPane.draw(midAndRightWidth, y+1, width, height-1);
-
 	
 		bottomBar.draw(x, height-1, width, height);
 	}
