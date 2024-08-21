@@ -214,8 +214,6 @@ struct Fen {
 		sel = util::path_without_trailing_separator(wd / middlePane.get_entry_from_index(middlePane.selectedEntryIndex));
 		rightPane.folder = sel;
 		rightPane.read_folder();
-
-		bottomBar.temporarily_show_alternate_text("wd: " + wd.string() + ", sel: " + sel.string());
 	}
 
 	Fen() {
@@ -265,16 +263,17 @@ struct Fen {
 			return false;
 
 		if (!fs::is_directory(sel)) {
-			nc::sync();
+/*			nc::sync();
 			nc::fini();
 			pid_t pid = fork();
 			if (pid == -1) {
 				perror("fork");
 			} else if (pid == 0) {
-				execlp("xdg-open", "fuck C", sel.string().c_str(), NULL);
+				execlp("vi", "fuck C", sel.string().c_str(), NULL);
 			}
 			nc::sync();
-			return true;
+			return true;*/
+			return false;
 		}
 
 		wd = sel;
