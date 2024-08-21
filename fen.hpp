@@ -264,8 +264,18 @@ struct Fen {
 		if (middlePane.entries.empty())
 			return false;
 
-		if (!fs::is_directory(sel))
-			return false;
+		if (!fs::is_directory(sel)) {
+			nc::sync();
+			nc::fini();
+			pid_t pid = fork();
+			if (pid == -1) {
+				perror("fork");
+			} else if (pid == 0) {
+				execlp("xdg-open", "fuck C", sel.string().c_str(), NULL);
+			}
+			nc::sync();
+			return true;
+		}
 
 		wd = sel;
 		sel = wd / rightPane.get_entry_from_index(rightPane.selectedEntryIndex);
