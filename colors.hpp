@@ -1,6 +1,8 @@
 #ifndef COLORS_HPP
 #define COLORS_HPP
 
+#include <ncurses.h>
+
 #define NCURSES_COLOR 1000/255
 #define MYCOLOR_AQUA_PAIR 8
 #define MYCOLOR_BLACK_BG_PAIR 9

@@ -2,6 +2,7 @@
 #define UTIL_HPP
 
 #include <filesystem>
+#include <string>
 #include <chrono>
 #include <unistd.h>
 #include <limits.h>
@@ -20,6 +21,7 @@
 		std::exit(EXIT_FAILURE); \
 	}
 
+using std::string;
 namespace fs = std::filesystem;
 
 namespace util {
