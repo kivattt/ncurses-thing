@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "util.hpp"
+#include "history.hpp"
 #include "ncursesbetter.hpp"
 
 #include "colors.hpp"
@@ -73,6 +74,10 @@ struct FilesPane {
 			return "";
 
 		return entries[index].path().filename();
+	}
+
+	void set_selected_entry_from_index(int newIndex) {
+		selectedEntryIndex = newIndex;
 	}
 
 	// Returns false if entryName not found, true otherwise
@@ -191,6 +196,7 @@ struct Fen {
 	TopBar topBar;
 	BottomBar bottomBar;
 	fs::path wd, sel;
+	History history;
 
 	FilesPane leftPane, middlePane, rightPane;
 
@@ -214,6 +220,14 @@ struct Fen {
 		sel = util::path_without_trailing_separator(wd / middlePane.get_entry_from_index(middlePane.selectedEntryIndex));
 		rightPane.folder = sel;
 		rightPane.read_folder();
+
+		std::optional<string> nextPath = history.next_path(sel);
+		if (nextPath.has_value()) {
+			rightPane.set_selected_entry_from_string(fs::path(nextPath.value()).filename());
+			rightPane.keep_selection_in_bounds();
+		} else {
+			rightPane.set_selected_entry_from_index(0);
+		}
 	}
 
 	Fen() {
@@ -277,8 +291,14 @@ struct Fen {
 		}
 
 		wd = sel;
-		sel = wd / rightPane.get_entry_from_index(rightPane.selectedEntryIndex);
-//		sel = history.get_history_entry_for_path(wd);
+		std::optional<string> nextPath = history.next_path(wd);
+		if (nextPath.has_value())
+			sel = nextPath.value();
+		else
+			sel = wd / rightPane.get_entry_from_index(0);
+
+		history.add(sel);
+
 		update_panes(true);
 		return true;
 	}
@@ -288,6 +308,7 @@ struct Fen {
 		--middlePane.selectedEntryIndex;
 		bool selectionWasOutOfBounds = middlePane.keep_selection_in_bounds();
 		sel = wd / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		history.add(sel);
 		update_panes();
 		return !selectionWasOutOfBounds;
 	}
@@ -297,6 +318,7 @@ struct Fen {
 		++middlePane.selectedEntryIndex;
 		bool selectionWasOutOfBounds = middlePane.keep_selection_in_bounds();
 		sel = wd / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		history.add(sel);
 		update_panes();
 		return !selectionWasOutOfBounds;
 	}
@@ -308,6 +330,7 @@ struct Fen {
 
 		middlePane.selectedEntryIndex = 0;
 		sel = sel.parent_path() / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		history.add(sel);
 		update_panes();
 		return true;
 	}
@@ -319,6 +342,7 @@ struct Fen {
 
 		middlePane.selectedEntryIndex = MAX(0, middlePane.entries.size()-1);
 		sel = sel.parent_path() / middlePane.get_entry_from_index(middlePane.selectedEntryIndex);
+		history.add(sel);
 		update_panes();
 		return true;
 	}
