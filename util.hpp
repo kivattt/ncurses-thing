@@ -15,10 +15,15 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+#define PANIC(msg) { \
+		std::cerr << (msg) << std::endl; \
+		std::exit(EXIT_FAILURE); \
+	}
+
 namespace fs = std::filesystem;
 
 namespace util {
-	int get_username_colorpair(uid_t UID, bool withBlackBackground = false) {
+	int get_username_colorpair(const uid_t UID, const bool withBlackBackground = false) {
 		if (UID == 0)
 			return withBlackBackground ? MYCOLOR_RED_BLACK_PAIR : MYCOLOR_RED_PAIR;
 
@@ -29,7 +34,7 @@ namespace util {
 		return withBlackBackground ? MYCOLOR_GREEN_BLACK_PAIR : MYCOLOR_GREEN_PAIR;
 	}
 
-	int get_groupname_colorpair(gid_t GID, bool withBlackBackground = false) {
+	int get_groupname_colorpair(const gid_t GID, const bool withBlackBackground = false) {
 		struct group *gr = getgrgid(GID);
 		if (!gr)
 			return withBlackBackground ? MYCOLOR_YELLOW_BLACK_PAIR : MYCOLOR_YELLOW_PAIR;
@@ -39,7 +44,7 @@ namespace util {
 		return withBlackBackground ? MYCOLOR_GREEN_BLACK_PAIR : MYCOLOR_GREEN_PAIR;
 	}
 
-	string get_username(uid_t UID) {
+	string get_username(const uid_t UID) {
 		struct passwd *pw = getpwuid(UID);
 		if (pw)
 			return pw->pw_name;
@@ -52,7 +57,20 @@ namespace util {
 		return hostname;
 	}
 
-	string path_with_trailing_separator(string path) {
+	string get_home_directory() {
+		const char *ret;
+		ret = getenv("HOME");
+		if (ret != NULL)
+			return ret;
+
+		struct passwd *pw = getpwuid(geteuid());
+		if (pw)
+			return pw->pw_dir;
+
+		PANIC("Failed to find home directory from $HOME or getpwuid()");
+	}
+
+	string path_with_trailing_separator(const string path) {
 		if (path.empty() || path.back() != '/')
 			return path + "/";
 
@@ -64,6 +82,14 @@ namespace util {
 			return path;
 
 		path.pop_back();
+		return path;
+	}
+
+	string path_with_home_as_tilde(const string path) {
+		string homeDir = get_home_directory();
+		if (path.starts_with(homeDir))
+			return "~" + path.substr(homeDir.length());
+
 		return path;
 	}
 

@@ -36,7 +36,7 @@ struct TopBar {
 		++printCursor;
 
 		nc::with_attr(COLOR_PAIR(MYCOLOR_AQUA_PAIR), [&](){
-			printCursor += nc::print(util::path_with_trailing_separator(sel->parent_path()), x + printCursor, y, width);
+			printCursor += nc::print(util::path_with_home_as_tilde(util::path_with_trailing_separator(sel->parent_path())), x + printCursor, y, width);
 		});
 
 		nc::with_attr(COLOR_PAIR(MYCOLOR_WHITE_PAIR), [&](){
