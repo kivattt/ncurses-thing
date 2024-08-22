@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <algorithm>
 #include <filesystem>
 
 using std::vector;
